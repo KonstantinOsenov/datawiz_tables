@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+
+<meta charset="utf-8" />
+<style>
+  .links line {
+    stroke: #999;
+    stroke-opacity: 0.6;
+  }
+
+  .nodes circle {
+    stroke: #fff;
+    stroke-width: 1.5px;
+  }
+</style>
+
+<head>
+  <link href="https://unpkg.com/tabulator-tables@5.6.1/dist/css/tabulator.min.css" rel="stylesheet">
+  <script type="text/javascript" src="https://unpkg.com/tabulator-tables@5.6.1/dist/js/tabulator.min.js"></script>
+</head>
+
+
+
+<body>
+
+<h1> Tabulator test </h1>
+<p> Input JSON </p>
+<p> ------------- </p>
+<p id = p_data_input> test_var </p>
+<p> ------------- </p>
+
+<div>
+	<button id="add-row">Add Blank Row to bottom</button>
+</div>
+
+<div id="example-table"></div>
+
+<div>
+	<button id="print-output">Print table in JSON format</button>
+</div>
+
+<script>
+
+//define some sample data
+ var studentList = [
+ 	{id:1, name:"Aang",   is_water_magic:true,  is_air_magic:true,  is_earth_magic:true,  is_fire_magic:true,  is_engineering:false,},
+ 	{id:2, name:"Zuko",   is_water_magic:false, is_air_magic:false, is_earth_magic:false, is_fire_magic:true,  is_engineering:false,},
+ 	{id:3, name:"Katara", is_water_magic:true,  is_air_magic:false, is_earth_magic:false, is_fire_magic:false, is_engineering:false,},
+ 	{id:4, name:"Sokka",  is_water_magic:false, is_air_magic:false, is_earth_magic:false, is_fire_magic:false, is_engineering:true,},
+ 	{id:5, name:"Azula",  is_water_magic:false, is_air_magic:false, is_earth_magic:false, is_fire_magic:true,  is_engineering:false,},
+ ];
+
+//alert(typeof tabledata)
+studentListJSON = JSON.stringify(studentList);
+document.getElementById('p_data_input').innerText = studentListJSON  //studentList.values()//.map(k => data[k])
+
+// testing - output
+var studentListsize = Object.keys(studentList).length;
+var newstudentListsize = studentListsize;
+document.write(studentListsize + ', ' + newstudentListsize);
+
+// custome editing of cells
+var editCheck = function(cell){
+    //cell - the cell component for the editable cell
+
+    //get row data
+    var data = cell.getRow().getData();
+
+    return data.id > studentListsize; // only allow the name cell to be edited if the age is over 18
+	//return false; // only allow the name cell to be edited if the age is over 18
+}
+
+// example of custom edit of cell ----- {title:"Name", field:"name", editor:"input", editable:editCheck}
+
+// The cellClick callback is triggered when a user left clicks on a cell, it can be set on a per column basis using the option in the columns definition object.
+var testCheckBox  = function(e, cell){
+	//cell.cancelEdit();
+	var data = cell.getRow().getData();
+	if (data.id > studentListsize) {
+		  //  block of code to be executed if the condition is true
+		  
+		  cell.setValue(!cell.getValue());
+		}
+      
+    }
+
+
+//create Tabulator on DOM element with id "example-table"
+var table = new Tabulator("#example-table", {
+ 	height:250, // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
+ 	data: studentList, //assign data to table
+ 	layout:"fitColumns", //fit columns to width of table (optional)
+    addRowPos:"bottom",
+ 	columns:[ //Define Table Columns
+	 	{title:"Name", 		  field:"name", editor:"input", editorParams:{
+																			search:true,
+																			selectContents:true
+																		  }, editable:editCheck,
+		},
+	 	{title:"Waterbender", field:"is_water_magic", hozAlign:"center", formatter:"tickCross", editor:"tickCross"},
+		{title:"Airbender",   field:"is_air_magic",   hozAlign:"center", formatter:"tickCross", cellClick: testCheckBox},
+		{title:"Earthbender", field:"is_earth_magic", hozAlign:"center", formatter:"tickCross", cellClick: testCheckBox, editable:editCheck},
+		{title:"Firebender",  field:"is_fire_magic",  hozAlign:"center", formatter:"tickCross"},
+		{title:"Engineer",    field:"is_engineering", hozAlign:"center", formatter:"tickCross", editor:"tickCross", editable:editCheck},
+ 	],
+});
+
+
+
+//trigger an alert message when the row is clicked
+/*table.on("rowClick", function(e, row){ 
+	alert("Row " + row.getData().id + " Clicked!!!! Name - " + row.getData().name);
+	var test_var = row.getData().name
+	document.getElementById('p_text_test').innerText = test_var
+});*/
+
+//Add row on "Add Row" button click
+document.getElementById("add-row").addEventListener("click", function(){
+	newstudentListsize = newstudentListsize + 1;
+    table.addRow({id: newstudentListsize, name: "<enter your name>"});
+});
+
+
+document.getElementById("print-output").addEventListener("click", function(){
+    var outputJSONdata = table.getData();
+	outputJSON = JSON.stringify(outputJSONdata);
+	document.getElementById('p_data_output').innerText = outputJSON;
+});
+
+//test=JSON.stringify(table);
+//alert(outputJSONdata);
+
+//outputJSON = JSON.stringify(outputJSONdata);
+//document.getElementById('p_data_output').innerText = outputJSONdata  //studentList.values()//.map(k => data[k])
+
+</script>
+
+<p> Output JSON </p>
+<p> ------------- </p>
+<p id = p_data_output> test_var </p>
+<p> ------------- </p>
+
+
+</body>
+</html>
