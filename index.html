@@ -15,8 +15,8 @@
 </style>
 
 <head>
-  <link href="https://unpkg.com/tabulator-tables@5.6.1/dist/css/tabulator.min.css" rel="stylesheet">
-  <script type="text/javascript" src="https://unpkg.com/tabulator-tables@5.6.1/dist/js/tabulator.min.js"></script>
+	<link href="tabulator-master/dist/css/tabulator.min.css" rel="stylesheet">
+	<script type="text/javascript" src="tabulator-master/dist/js/tabulator.min.js"></script>
 </head>
 
 
@@ -50,11 +50,11 @@
  	{id:5, name:"Azula",  DOB: 1960-01-01, T1:false, T2:false, T3:false, },
  ];
 
-//alert(typeof tabledata)
+// print input data
 studentListJSON = JSON.stringify(studentList);
 document.getElementById('p_data_input').innerText = studentListJSON  //studentList.values()//.map(k => data[k])
 
-// testing - output
+// OLD vs NEW rows
 var studentListsize = Object.keys(studentList).length;
 var newstudentListsize = studentListsize;
 //document.write(studentListsize + ', ' + newstudentListsize);
@@ -62,12 +62,8 @@ var newstudentListsize = studentListsize;
 // custome editing of cells
 var editCheck = function(cell){
     //cell - the cell component for the editable cell
-
-    //get row data
     var data = cell.getRow().getData();
-
-    return data.id > studentListsize; // only allow the name cell to be edited if the age is over 18
-	//return false; // only allow the name cell to be edited if the age is over 18
+    return data.id > studentListsize; 
 }
 
 // example of custom edit of cell ----- {title:"Name", field:"name", editor:"input", editable:editCheck}
@@ -78,7 +74,6 @@ var testCheckBox  = function(e, cell){
 	var data = cell.getRow().getData();
 	if (data.id > studentListsize) {
 		  //  block of code to be executed if the condition is true
-		  
 		  cell.setValue(!cell.getValue());
 		}
       
@@ -114,7 +109,7 @@ document.getElementById("add-row").addEventListener("click", function(){
     table.addRow({id: newstudentListsize, name: "<enter your name>"});
 });
 
-
+// Print output JSON
 document.getElementById("print-output").addEventListener("click", function(){
     //var outputJSONdata = table.setFilter("id", ">", studentListsize).getData();
 	//var outputJSONdata = table.getData();
