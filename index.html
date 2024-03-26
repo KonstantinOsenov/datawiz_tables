@@ -75,7 +75,8 @@ var test_function = function(definitions){
 
         definitions.forEach((column) => {
             //if ( ["id", "name"].includes(column.title) ) {
-			if (column.title.startsWith("T")) {
+			//if (column.title.startsWith("T")) {
+			if ( !["id", "name"].includes(column.title) ) {
 				
 				column.formatter = "tickCross"; // add header filter to every column    "tickCross"
 				column.formatterParams = {
