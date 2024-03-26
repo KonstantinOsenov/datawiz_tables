@@ -20,7 +20,6 @@
 </head>
 
 
-
 <body>
 
 <h1> Tabulator test </h1>
@@ -43,11 +42,11 @@
 
 //define some sample data
  var studentList = [
- 	{id:1, name:"Aang",   DOB: 1960-01-01, T1:true,  T2:true,  T3:true,  },
- 	{id:2, name:"Zuko",   DOB: 1960-01-01, T1:false, T2:false, T3:false, },
- 	{id:3, name:"Katara", DOB: 1960-01-01, T1:true,  T2:true,  T3:true, },
- 	{id:4, name:"Sokka",  DOB: 1960-01-01, T1:false, T2:false, T3:false, },
- 	{id:5, name:"Azula",  DOB: 1960-01-01, T1:false, T2:false, T3:false, },
+ 	{id:1, name:"John Smith",   T1:"",  	T2:true,  	T3:"",  	},
+ 	{id:2, name:"Ivan Ivanov",  T1:false, 	T2:false, 	T3:false, 	},
+ 	{id:3, name:"Bob", 			T1:true,  	T2:"",  	T3:true, 	},
+ 	{id:4, name:"Random name",  T1:false, 	T2:false, 	T3:"", 		},
+ 	{id:5, name:"Cool name",    T1:"", 		T2:false, 	T3:false, 	},
  ];
 
 // print input data
@@ -57,26 +56,36 @@ document.getElementById('p_data_input').innerText = studentListJSON  //studentLi
 // OLD vs NEW rows
 var studentListsize = Object.keys(studentList).length;
 var newstudentListsize = studentListsize;
-//document.write(studentListsize + ', ' + newstudentListsize);
 
-// custome editing of cells
-var editCheck = function(cell){
-    //cell - the cell component for the editable cell
-    var data = cell.getRow().getData();
-    return data.id > studentListsize; 
-}
-
-// example of custom edit of cell ----- {title:"Name", field:"name", editor:"input", editable:editCheck}
-
-// The cellClick callback is triggered when a user left clicks on a cell, it can be set on a per column basis using the option in the columns definition object.
-var testCheckBox  = function(e, cell){
+// change cell value
+var changeCheckBoxValue  = function(e, cell){
 	//cell.cancelEdit();
 	var data = cell.getRow().getData();
-	if (data.id > studentListsize) {
+//	if (cell.getValue() != "") {
+	if ( [true, false].includes(cell.getValue()) ) {
 		  //  block of code to be executed if the condition is true
 		  cell.setValue(!cell.getValue());
 		}
       
+    }
+
+// change column definition
+var test_function = function(definitions){
+        //definitions - array of column definition objects
+
+        definitions.forEach((column) => {
+            //if ( ["id", "name"].includes(column.title) ) {
+			if (column.title.startsWith("T")) {
+				
+				column.formatter = "tickCross"; // add header filter to every column    "tickCross"
+				column.formatterParams = {
+											allowEmpty:true, //   crossElement:false
+										};
+				column.cellClick = changeCheckBoxValue;
+				}
+        });
+
+        return definitions;
     }
 
 
@@ -86,12 +95,8 @@ var table = new Tabulator("#example-table", {
  	data: studentList, //assign data to table
  	layout: "fitData", //"fitColumns", //fit columns to width of table (optional)
     addRowPos:"bottom",
- 	columns:[ //Define Table Columns
-	 	{title:"Name", 	field:"name", editor:"input", editable:editCheck, width:150		},
-		{title:"T1",   field:"T1",   hozAlign:"center", formatter:"tickCross", cellClick: testCheckBox},
-		{title:"T2",   field:"T2",   hozAlign:"center", formatter:"tickCross", cellClick: testCheckBox},
-		{title:"T3",   field:"T3",   hozAlign:"center", formatter:"tickCross", cellClick: testCheckBox},
- 	],
+    autoColumns:true,
+	autoColumnsDefinitions:test_function,
 });
 
 
@@ -103,10 +108,16 @@ var table = new Tabulator("#example-table", {
 	document.getElementById('p_text_test').innerText = test_var
 });*/
 
+
 //Add row on "Add Row" button click
 document.getElementById("add-row").addEventListener("click", function(){
 	newstudentListsize = newstudentListsize + 1;
-    table.addRow({id: newstudentListsize, name: "<enter your name>"});
+    table.addRow(
+		{
+			id: newstudentListsize, 
+			name: "<enter name>",
+		}
+			);
 });
 
 // Print output JSON
@@ -114,7 +125,7 @@ document.getElementById("print-output").addEventListener("click", function(){
     //var outputJSONdata = table.setFilter("id", ">", studentListsize).getData();
 	//var outputJSONdata = table.getData();
 	
-	var outputJSONdata = table.searchData("id", ">", studentListsize);//get row data for all rows with an age greater than 12
+	var outputJSONdata = table.getData() //searchData("id", ">", studentListsize);//get row data for all rows with an age greater than 12
 	
 	outputJSON = JSON.stringify(outputJSONdata);
 	document.getElementById('p_data_output').innerText = outputJSON;
