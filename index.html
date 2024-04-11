@@ -12,142 +12,326 @@
     stroke: #fff;
     stroke-width: 1.5px;
   }
+
+body {background-color: black;}
+
+#example-table-theme {
+  padding-right: 50px;
+  padding-left: 50px;
+}
+
+#right {display: flex; 
+	justify-content: flex-end;
+
+}
+
 </style>
 
 <head>
-  <link href="https://unpkg.com/tabulator-tables@5.6.1/dist/css/tabulator.min.css" rel="stylesheet">
-  <script type="text/javascript" src="https://unpkg.com/tabulator-tables@5.6.1/dist/js/tabulator.min.js"></script>
+
+<link href="https://unpkg.com/tabulator-tables@5.6.1/dist/css/tabulator_midnight.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+ <script type="text/javascript" src="https://unpkg.com/tabulator-tables@5.6.1/dist/js/tabulator.min.js"></script>
 </head>
+
 
 
 <body>
 
-<h1> Tabulator test </h1>
-<p> Input JSON </p>
-<p> ------------- </p>
-<p id = p_data_input> test_var </p>
-<p> ------------- </p>
+<div id="example-table-theme"></div>
 
-<div>
-	<button id="add-row">Add Blank Row to bottom</button>
+
+<div id="right">
+	<button id="submit_training">Send in your training request</button>
 </div>
 
-<div id="example-table"></div>
+<br> <!--new 2024-04-04-->
+<div id="print_cur_training_value" style="color:#089000;"></div> <!--new 2024-04-04-->
+
+<br><br><br> 
+<div id="addition-table"></div>
+
 
 <div>
-	<button id="print-output">Print table in JSON format</button>
+	<button id="add-row">Add Row</button><br><br><br>
+</div>
+
+<div>
+	<button id="new-pers">validate new credentials</button><br><br><br>
 </div>
 
 <script>
 
-//define some sample data
- var studentList = [
- 	{id:1, name:"John Smith",   T1:"",  	T2:true,  	T3:"",  	},
- 	{id:2, name:"Ivan Ivanov",  T1:false, 	T2:false, 	T3:false, 	},
- 	{id:3, name:"Bob", 			T1:true,  	T2:"",  	T3:true, 	},
- 	{id:4, name:"Random name",  T1:false, 	T2:false, 	T3:"", 		},
- 	{id:5, name:"Cool name",    T1:"", 		T2:false, 	T3:false, 	},
- ];
 
-// print input data
-studentListJSON = JSON.stringify(studentList);
-document.getElementById('p_data_input').innerText = studentListJSON  //studentList.values()//.map(k => data[k])
+// end of new 2024-04-11
+
+
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!
+// I tested with your data (I copy-pasted them to the table_data variable)
+// table_data = ...
+// !!!!!!!!!!!!!!!!!!!!!!!!!!
 
 // OLD vs NEW rows
-var studentListsize = Object.keys(studentList).length;
-var newstudentListsize = studentListsize;
+//var studentListsize = 0; 
+var newstudentListsize = 0;
+var new_rows = 0;
 
-// change cell value
-var changeCheckBoxValue  = function(e, cell){
-	//cell.cancelEdit();
-	var data = cell.getRow().getData();
-//	if (cell.getValue() != "") {
-	if ( [true, false].includes(cell.getValue()) ) {
-		  //  block of code to be executed if the condition is true
-		  cell.setValue(!cell.getValue());
+var rows_to_export = []; //new 2024-04-11
+//console.log(rows_to_export.length);
+
+// TRAINING VALUE calculation //new 2024-04-04
+var training_values = {"Introduction to suspended ceiling systems": 10, "Hot Work Passport": 5}; //new 2024-04-04
+var training_value_basic = 0; //new 2024-04-04
+document.getElementById('print_cur_training_value').innerText = "Total estimated return value: " + training_value_basic + " EUR"; //new 2024-04-04
+var training_value_new = training_value_basic; //new 2024-04-04
+
+// change cell value if the value is not empty
+var f_changeCheckBoxValue  = function(e, cell){
+
+	//var data = cell.getRow().getData(); //new 2024-04-04
+	var cur_cell_value = cell.getValue() //new 2024-04-04
+	if ( [true,false].includes(cur_cell_value) ) {
+	      var new_cell_value = !cur_cell_value //new 2024-04-04
+		  cell.setValue(new_cell_value);
+		  
+		  //start of new 2024-04-04 - course value
+		  var column_name = cell.getColumn().getField(); // var test = cell.getColumn().getDefinition().title;
+		  var course_value = training_values[column_name]
+		  if (new_cell_value) { // the value is true/false, we don't need to compare it with true/false
+			 training_value_new = training_value_new - course_value // now "true" means that the course is not selected
+		  }
+		  else {
+			training_value_new = training_value_new + course_value
+		  }
+		  
+		  document.getElementById('print_cur_training_value').innerText = "Total estimated return value: " + training_value_new + " EUR"; //new 2024-04-04
+		  // end of new 2024-04-04
+		  
+		  // start of new 2024-04-11
+		  var updated_cscs = cell.getRow().getCell('cscsnin').getValue();
+		  if ( !rows_to_export.includes(updated_cscs) ) {
+			//console.log(updated_cscs);
+			rows_to_export.push(updated_cscs);
+		  }
+		  //end of new 2024-04-11
 		}
       
     }
 
-// change column definition
-var test_function = function(definitions){
-        //definitions - array of column definition objects
-
+// change column definitions for columns with cources (all the columns except for "cscsnin"
+var f_add_column_definition = function(definitions){
+        //definitions - array of column definition objects		
+		
         definitions.forEach((column) => {
-            //if ( ["id", "name"].includes(column.title) ) {
-			//if (column.title.startsWith("T")) {
-			if ( !["id", "name"].includes(column.title) ) {
+			if ( !["cscsnin","name"].includes(column.title) ) {
 				
 				column.formatter = "tickCross"; // add header filter to every column    "tickCross"
 				column.formatterParams = {
-											allowEmpty:true, //   crossElement:false
+											allowEmpty:true, //   crossElement:true
+											tickElement:"<i class='fa fa-square-o' aria-hidden='true'></i>",
+    											crossElement:"<i class='fa fa-square' aria-hidden='true'></i>",
 										};
-				column.cellClick = changeCheckBoxValue;
+				column.cellClick = f_changeCheckBoxValue;
+				column.headerWordWrap = true; //new 2024-04-04
+				column.width = 130; //new 2024-04-04
+				column.hozAlign = "center"; //new 2024-04-04
 				}
+			else {
+				column.editor = "input";
+				column.editable = f_editCheck;
+				column.frozen = "true";
+				column.width = 110; //new 2024-04-04
+			}
         });
-
+		
         return definitions;
     }
 
+// custome editing of cells
+var f_editCheck = function(cell){
+    //cell - the cell component for the editable cell
+    
+	var studentListsize = table.getData().length;
+	//alert(studentListsize);
+	var data = cell.getRow().getData();
+    return data.id > studentListsize-new_rows; 
+}
 
 //create Tabulator on DOM element with id "example-table"
-var table = new Tabulator("#example-table", {
- 	height:250, // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
- 	data: studentList, //assign data to table
- 	layout: "fitData", //"fitColumns", //fit columns to width of table (optional)
-    addRowPos:"bottom",
-    autoColumns:true,
-	autoColumnsDefinitions:test_function,
+var table = new Tabulator("#example-table-theme", {
+ 	height:550, // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
+ 	ajaxURL:"http://127.0.0.1:5000/feed", //ajax URL
+	//data:table_data, //!!!!!!!!!!!!!!!!!!!!!!!
+ 	layout: "fitColumns",
+        addRowPos:"bottom",
+	autoColumns:true,
+        autoColumnsDefinitions: f_add_column_definition,
+        dataLoaderLoading:'<i class="fa fa-circle-o-notch fa-spin fa-3x fa-fw"></i>'
+
 });
 
+// start of new 2024-04-11
+// assuming we have a list of columns that we want to show first here - "list_of_columns_to_show"
+list_of_columns_to_show = ["Quality assurance and customer handover", "Introduction to setting out and installation of lay in grid systems"];
+table.on("tableBuilt", function(){
+	list_of_columns_to_show.forEach( (column) => {
+		table.moveColumn(column, "cscsnin", true);
+	});
+});
+//end of new 2024-04-11
 
+//table.moveColumn("Quality assurance and customer handover", "cscsnin", true); // after a certain Tabulator version you can't just do things with a table, you need to use "table.on("tableBuilt", function(){..."
+//table.addColumn({title:"Age", field:"age"}, true, "name");
+//console.log(table.getData().length);
 
-//trigger an alert message when the row is clicked
-/*table.on("rowClick", function(e, row){ 
-	alert("Row " + row.getData().id + " Clicked!!!! Name - " + row.getData().name);
-	var test_var = row.getData().name
-	document.getElementById('p_text_test').innerText = test_var
-});*/
+//create Tabulator on DOM element with id "example-table"
+var table_additions = new Tabulator("#addition-table", {
+ 	height:150, // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
+	data:[{fname:"",lname:"", CSCS:"", DOB:""}],
+ 	layout: "fitColumns",
+        addRowPos:"bottom",
+	autoColumns:true,
+	autoColumnsDefinitions:{
+        	fname: {editor:"input"}, //add input editor to the name column
+		lname: {editor:"input"},
+        	CSCS: {editor:"input"},
+		DOB: {editor:"date"}, //add header filters to the age column
+    		},
+        dataLoaderLoading:'<i class="fa fa-circle-o-notch fa-spin fa-3x fa-fw"></i>'
+
+});
 
 
 //Add row on "Add Row" button click
 document.getElementById("add-row").addEventListener("click", function(){
-	newstudentListsize = newstudentListsize + 1;
-    table.addRow(
-		{
-			id: newstudentListsize, 
-			name: "<enter name>",
-		}
+	
+	var CurrentLength = table_additions.getData().length;
+	
+	new_rows = new_rows + 1;
+	newstudentListsize = CurrentLength + new_rows;
+	
+    table_additions.addRow(
+					{fname:"",lname:"", CSCS:"", DOB:""},
+					true
 			);
-});
+	//var data_row_cells = table.getRows()[newstudentListsize-1].getCells(); // "-1" because it starts from 0 
+	var data_row_cells = table_additions.getRows()[0].getCells(); // "-1" because it starts from 0 
+	
+	
+	
+	});
+
 
 // Print output JSON
-document.getElementById("print-output").addEventListener("click", function(){
-    //var outputJSONdata = table.setFilter("id", ">", studentListsize).getData();
-	//var outputJSONdata = table.getData();
-	
-	var outputJSONdata = table.getData() //searchData("id", ">", studentListsize);//get row data for all rows with an age greater than 12
+
+document.getElementById("submit_training").addEventListener("click", function(){
+	var outputJSONdata = table.getData();
 	
 	outputJSON = JSON.stringify(outputJSONdata);
-	document.getElementById('p_data_output').innerText = outputJSON;
+		
+	//start of new 2024-04-11
+	if ( rows_to_export.length > 0 ) {
+		outputJSON_test = table.searchData("cscsnin", "in", rows_to_export);
+		console.log(outputJSON_test);
+	// !!!!!!!!!! add post call here
+	}
+	//end of new 2024-04-11
+	
+	
+	let xhr = new XMLHttpRequest()
+	xhr.open('POST', "selected", true)
+	xhr.setRequestHeader('Content-type', 'application/json; charset=UTF-8')
+	xhr.send(outputJSON);
+	
+	rows_to_export = []; // !!!!!!!!!!!!!!!!!!! think about this later - what to do once we send data to the backend - should we clean up somehow/?
 });
 
 
+// validate new names and cscs
+
+document.getElementById("new-pers").addEventListener("click", function(){
+
+	//start of new 2024-04-05
+	var table_additions_rows = table_additions.getData();
+	var new_rows_cnt = table_additions_rows.length;
+	
+	var is_empty_cscs_value = false; // is "CSCS" empty?
+			
+	// checking if "CSCS" exists in the main table
+	var existing_cscs_cells = table.getColumn("cscsnin").getCells();
+	var existing_cscs_values = [];
+	var duplicates_cscs_value = [];
+	
+	existing_cscs_cells.forEach( (currentElement) => { // get existing values from the main table
+		existing_cscs_values.push(currentElement.getValue());
+		//console.log(currentElement.getValue());
+	});
+		
+		
+	table_additions_rows.forEach( (currentElement) => {
+		//console.log(currentElement);
+		var cur_cscs_value = currentElement["CSCS"];
+		//console.log(cur_cscs_value);
+		if (cur_cscs_value == "") { //null check
+			is_empty_cscs_value = true;
+		}
+		//alert(currentElement.getCell("CSCS").getValue());
+		if (existing_cscs_values.includes(cur_cscs_value)) { //duplicates check
+			duplicates_cscs_value.push(cur_cscs_value);
+		}
+	});
 
 
-//test=JSON.stringify(table);
-//alert(outputJSONdata);
+	
+	
+	if (is_empty_cscs_value) { 
+		alert("Please fill in 'CSCS'"); 
+	} 
+	else if (duplicates_cscs_value.length>0) { 
+		alert("These 'CSCS' values exist in the table - " + duplicates_cscs_value); 
+	} 
+	else { 
+		alert(new_rows_cnt + " rows were added"); // end of new 2024-04-05
+		
+		var outputJSONdata = table_additions.getData()
+		outputJSON = JSON.stringify(outputJSONdata);
+		
+		let xhr = new XMLHttpRequest()
+		xhr.responseType = 'json';
+		xhr.open('POST', "add_pers", true)
+		xhr.setRequestHeader('Content-type', 'application/json; charset=UTF-8')
+		xhr.send(outputJSON);
+		xhr.onload  = function() {
+   				var jsonResponse = xhr.response;
+   				table.addData(jsonResponse, true);
+			};	
+		
+		//table_additions.setData([]); // Delete everything if we passed all the checks //new 2024-04-05
+		
+		//start of new 2024-04-11
+		// assuming we have a list of incorrect CSCS from the server in the response in the variable "list_of_incorrect_cscs"
+		// instead of deleting everything we delete only succesfully added CSCS (and leave only incorrect CSCS)
+		list_of_incorrect_cscs = ['a', 'b'] // "a" and "b" are incorrect CSCS from the server
+		table_additions.setFilter("CSCS", "in", list_of_incorrect_cscs); 
+		console.log(table_additions.getData())
+		// perhaps, we can add a comment to the table from the server (what went wrong)
+		//end of new 2024-04-11
+		
+	} //new 2024-04-05
 
-//outputJSON = JSON.stringify(outputJSONdata);
-//document.getElementById('p_data_output').innerText = outputJSONdata  //studentList.values()//.map(k => data[k])
+
+
+		
+});
 
 </script>
 
+<!--
 <p> Output JSON </p>
 <p> ------------- </p>
 <p id = p_data_output> test_var </p>
 <p> ------------- </p>
-
+-->
 
 </body>
 </html>
